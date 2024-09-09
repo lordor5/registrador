@@ -21,8 +21,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Provide time.json file
-        run: echo '${{ secrets.TIME_JSON }}' > time.json
+      - name: Verify time.json exists
+        run: ls -la time.json
 
       - name: Run Puppeteer script
         env:
