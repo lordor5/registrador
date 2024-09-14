@@ -3,7 +3,7 @@ name: Run Puppeteer Script
 on:
   workflow_dispatch: # Allows manual trigger for this workflow
   schedule:
-    - cron: "23 9 * * 6"
+    - cron: "40 8 * * 6"
 
 jobs:
   puppeteer-job:
