@@ -55,7 +55,7 @@ async function register() {
 
       // If the link is found, click on it
       if (link) {
-        //link.click();
+        link.click();
         console.log("registrado en: ", registro);
         await delay(500);
       }
