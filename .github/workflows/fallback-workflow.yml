@@ -1,0 +1,35 @@
+name: Fallback Workflow
+
+on:
+  schedule:
+    - cron: '45 7 * * 0'  # Runs every Sunday at 7:45 AM (15 minutes after the main workflow)
+  workflow_dispatch:       # Allow manual trigger
+
+jobs:
+  fallback-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if Main Workflow has been triggered
+        id: check_main_workflow
+        run: |
+          # GitHub API request to check the status of the last run of the main workflow
+          last_run=$(gh api repos/${{ github.repository }}/actions/workflows/main-workflow.yml/runs \
+            --jq '.workflow_runs[0].status')
+
+          echo "Last run status: $last_run"
+          
+          if [[ "$last_run" == "completed" || "$last_run" == "in_progress" ]]; then
+            echo "Main workflow already started or completed. Exiting."
+            exit 0
+          else
+            echo "Main workflow not started. Proceeding to trigger it."
+          fi
+
+      - name: Trigger Main Workflow
+        if: ${{ steps.check_main_workflow.outputs.last_run != 'completed' && steps.check_main_workflow.outputs.last_run != 'in_progress' }}
+        run: |
+          gh api \
+            -X POST \
+            repos/${{ github.repository }}/actions/workflows/main-workflow.yml/dispatches \
+            -f ref=main \
+            -f inputs.triggered_by=fallback
