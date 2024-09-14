@@ -13,7 +13,7 @@ jobs:
         id: check_main_workflow
         run: |
           # GitHub API request to check the status of the last run of the main workflow
-          last_run=$(gh api repos/${{ github.repository }}/actions/workflows/main-workflow.yml/runs \
+          last_run=$(gh api repos/${{ github.repository }}/actions/workflows/nodejs.yml/runs \
             --jq '.workflow_runs[0].status')
 
           echo "Last run status: $last_run"
