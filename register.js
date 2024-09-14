@@ -5,9 +5,13 @@ dotenv.config();
 
 // Wait for the scheduled time
 async function register() {
+  const delay = calculateDelayUntil10AM();
+
+  // Delay the execution until 10 AM Spain time
+  await new Promise((resolve) => setTimeout(resolve, delay));
+
   const browser = await puppeteer.launch({
     headless: true,
-    args: ["--no-sandbox"],
   }); // Change to true for headless mode
   const page = await browser.newPage();
 
@@ -51,7 +55,7 @@ async function register() {
 
       // If the link is found, click on it
       if (link) {
-        link.click();
+        //link.click();
         console.log("registrado en: ", registro);
         await delay(500);
       }
@@ -62,3 +66,28 @@ async function register() {
   await browser.close();
 }
 register();
+
+// Helper function to calculate delay until 10 AM in Spain (CET)
+function calculateDelayUntil10AM() {
+  const now = new Date();
+
+  // Spain is usually in the Central European Time (CET) zone, UTC+1 or UTC+2 (during daylight saving time)
+  const currentOffset = now.getTimezoneOffset(); // in minutes
+  const spainOffset = -120; // Assuming it's UTC+2 for Daylight Saving Time (adjust accordingly)
+
+  // Convert current time to Spain's time by adjusting the timezone offset
+  now.setMinutes(now.getMinutes() + currentOffset - spainOffset);
+
+  // Set the target time to 10:00 AM in Spain
+  const targetTime = new Date(now);
+  targetTime.setHours(10, 0, 0, 0); // 10:00 AM
+
+  // If it's already past 10:00 AM today, set the target to 10:00 AM tomorrow
+  if (now > targetTime) {
+    targetTime.setDate(targetTime.getDate() + 1); // Set to the next day
+  }
+
+  const delay = targetTime - now;
+  console.log(`Waiting ${delay / 1000 / 60} minutes until 10 AM Spain time...`);
+  return delay;
+}
