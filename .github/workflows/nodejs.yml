@@ -3,7 +3,7 @@ name: Run Puppeteer Script
 on:
   workflow_dispatch: # Allows manual trigger
   schedule:
-    - cron: "40 8 * * 6"
+    - cron: '40 8 * * 6'
 
 jobs:
   puppeteer-job:
@@ -16,13 +16,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20" # You can specify the Node.js version you prefer
+          node-version: "20"
 
       - name: Install dependencies
         run: npm install
-
-      - name: Verify time.json exists
-        run: ls -la time.json
 
       - name: Run Puppeteer script
         env:
