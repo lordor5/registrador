@@ -3,7 +3,7 @@ name: Run Puppeteer Script
 on:
   workflow_dispatch: # Allows manual trigger
   schedule:
-    - cron: '45 16 * * 6' # 50 7 * * 6 needs to be single quotes ''
+    - cron: '30 7 * * 6' # 50 7 * * 6 needs to be single quotes ''
 
 jobs:
   puppeteer-job:
