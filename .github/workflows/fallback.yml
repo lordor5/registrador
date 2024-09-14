@@ -1,12 +1,14 @@
-name: Run Puppeteer Script
+name: Run Puppeteer Script (Fallback)
 
 on:
-  workflow_dispatch: # Allows manual trigger
-  schedule:
-    - cron: "25 16 * * 6" # 50 7 * * 6
+  workflow_run:
+    workflows: ["Run Puppeteer Script"]
+    types:
+      - completed
+    delay: 60 # 600 seconds = 10 minutes
 
 jobs:
-  puppeteer-job:
+  puppeteer-fallback-job:
     runs-on: ubuntu-latest
 
     steps:
