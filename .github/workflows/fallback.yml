@@ -5,7 +5,7 @@ on:
     workflows: ["Run Puppeteer Script"]
     types:
       - completed
-    delay: 60 # 600 seconds = 10 minutes
+    delay: 600 # 600 seconds = 10 minutes
 
 jobs:
   puppeteer-fallback-job:
