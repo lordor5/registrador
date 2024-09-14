@@ -8,7 +8,7 @@ async function register() {
   const delay = calculateDelayUntil10AM();
 
   // Delay the execution until 10 AM Spain time
-  await new Promise((resolve) => setTimeout(resolve, delay));
+  //await new Promise((resolve) => setTimeout(resolve, delay));
 
   const browser = await puppeteer.launch({
     headless: true,
