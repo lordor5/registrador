@@ -5,7 +5,10 @@ dotenv.config();
 
 // Wait for the scheduled time
 async function register() {
-  const browser = await puppeteer.launch({ headless: true }); // Change to true for headless mode
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox"],
+  }); // Change to true for headless mode
   const page = await browser.newPage();
 
   // Navigate to the login page
