@@ -2,7 +2,7 @@ name: Fallback Workflow
 
 on:
   schedule:
-    - cron: "45 7 * * 0" # Runs every Sunday at 7:45 AM (15 minutes after the main workflow)
+    - cron: '45 7 * * 0' # Runs every Sunday at 7:45 AM (15 minutes after the main workflow)
   workflow_dispatch: # Allows manual trigger
 
 jobs:
@@ -41,3 +41,20 @@ jobs:
             repos/${{ github.repository }}/actions/workflows/nodejs.yml/dispatches \
             -f ref=main \
             -f inputs.triggered_by=fallback
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Puppeteer script
+        env:
+          DNI: ${{ secrets.DNI }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+        run: node register.js
