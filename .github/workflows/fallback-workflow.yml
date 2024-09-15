@@ -2,8 +2,8 @@ name: Fallback Workflow
 
 on:
   schedule:
-    - cron: '45 7 * * 0'  # Runs every Sunday at 7:45 AM (15 minutes after the main workflow)
-  workflow_dispatch:       # Allow manual trigger
+    - cron: "45 7 * * 0" # Runs every Sunday at 7:45 AM (15 minutes after the main workflow)
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   fallback-job:
@@ -17,7 +17,7 @@ jobs:
             --jq '.workflow_runs[0].status')
 
           echo "Last run status: $last_run"
-          
+
           if [[ "$last_run" == "completed" || "$last_run" == "in_progress" ]]; then
             echo "Main workflow already started or completed. Exiting."
             exit 0
@@ -30,6 +30,6 @@ jobs:
         run: |
           gh api \
             -X POST \
-            repos/reagistrador/actions/workflows/main-workflow.yml/dispatches \
+            repos/registrador/actions/workflows/main-workflow.yml/dispatches \
             -f ref=main \
             -f inputs.triggered_by=fallback
