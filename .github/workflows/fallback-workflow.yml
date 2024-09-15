@@ -33,14 +33,14 @@ jobs:
             echo "Main workflow not started. Proceeding to trigger it."
           fi
 
-      - name: Trigger Main Workflow
-        if: ${{ steps.check_main_workflow.outputs.last_run != 'completed' && steps.check_main_workflow.outputs.last_run != 'in_progress' }}
-        run: |
-          gh api \
-            -X POST \
-            repos/${{ github.repository }}/actions/workflows/nodejs.yml/dispatches \
-            -f ref=main \
-            -f inputs.triggered_by=fallback
+      # - name: Trigger Main Workflow
+      #   if: ${{ steps.check_main_workflow.outputs.last_run != 'completed' && steps.check_main_workflow.outputs.last_run != 'in_progress' }}
+      #   run: |
+      #     gh api \
+      #       -X POST \
+      #       repos/${{ github.repository }}/actions/workflows/nodejs.yml/dispatches \
+      #       -f ref=main \
+      #       -f inputs.triggered_by=fallback
 
       - name: Checkout repository
         uses: actions/checkout@v3
