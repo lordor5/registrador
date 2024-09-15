@@ -9,7 +9,7 @@ jobs:
   fallback-job:
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Set the GH_TOKEN environment variable
+      GH_TOKEN: ${{ github.token }}  # Set the GH_TOKEN environment variable
 
     steps:
       - name: Install GitHub CLI
