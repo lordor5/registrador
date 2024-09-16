@@ -12,11 +12,6 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Set the GH_TOKEN environment variable
 
     steps:
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install gh -y  # Ensure GitHub CLI is installed
-
       - name: Check if Main Workflow has been triggered in the past hour
         id: check_main_workflow
         run: |
