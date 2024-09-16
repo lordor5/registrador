@@ -10,16 +10,15 @@ async function main() {
   await new Promise((resolve) => setTimeout(resolve, delay));
 
   // Load the time from the time.json file
-  const timeConfig = JSON.parse(fs.readFileSync("time.json"));
-  console.log(timeConfig);
+  const { registros } = JSON.parse(fs.readFileSync("time.json"));
+  console.log(registros);
 
-  let arr = register(timeConfig.registros);
-
-  while (arr.length !== timeConfig.registros.length) {
-    let arr = await register(timeConfig.registros);
+  let arr = await register(registros);
+  console.log(arr);
+  while (arr.length !== 0) {
+    await new Promise((resolve) => setTimeout(resolve, 300000)); //300000 = 5 minutos
+    arr = await register(arr);
     console.log(arr);
-
-    await new Promise((resolve) => setTimeout(resolve, 300000));
   }
 }
 main();
@@ -57,22 +56,25 @@ async function register(arr) {
   newArr = await page.evaluate(async (arr) => {
     // Helper function to create a delay
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    let newArr = [];
-    for (const registro of arr) {
+    //let newArr = [];
+    for (let i = 0; i < arr.length; i++) {
       // Find the anchor tag that contains 'MUS068' in its text
+      console.log(arr[i]);
       const link = Array.from(document.querySelectorAll("a")).find((a) =>
-        a.innerText.includes(registro)
+        a.innerText.includes(arr[i])
       );
 
       // If the link is found, click on it
       if (link) {
         link.click();
-        console.log("registrado en: ", registro);
-        newArr.push(registro);
+        console.log("registrado en: ", arr[i]);
+        arr.splice(i, 1);
+        i--;
+        //newArr.push(registro);
         await delay(500);
       }
     }
-    return newArr;
+    return arr;
   }, arr);
 
   // Close the browser after actions
