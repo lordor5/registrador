@@ -2,7 +2,7 @@ name: Fallback Workflow
 
 on:
   schedule:
-    - cron: "45 7 * * *" # Runs every Sunday at 7:45 AM (15 minutes after the main workflow)
+    - cron: "45 7 * * 6" # Runs every Sunday at 7:45 AM (15 minutes after the main workflow)
   workflow_dispatch: # Allows manual trigger
 
 jobs:
@@ -12,6 +12,11 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Set the GH_TOKEN environment variable
 
     steps:
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install gh -y  # Ensure GitHub CLI is installed
+
       - name: Check if Main Workflow has been triggered
         id: check_main_workflow
         run: |
@@ -22,28 +27,28 @@ jobs:
           echo "Last run status: $last_run"
 
           if [[ "$last_run" == "completed" || "$last_run" == "in_progress" ]]; then
-            echo "::set-output name=last_run::completed_or_in_progress"
+            echo "last_run=completed_or_in_progress" >> $GITHUB_ENV
             exit 0
           else
-            echo "::set-output name=last_run::not_started"
+            echo "last_run=not_started" >> $GITHUB_ENV
           fi
 
       - name: Checkout repository
-        if: ${{ steps.check_main_workflow.outputs.last_run == 'not_started' }}
+        if: ${{ env.last_run == 'not_started' }}
         uses: actions/checkout@v3
 
       - name: Set up Node.js
-        if: ${{ steps.check_main_workflow.outputs.last_run == 'not_started' }}
+        if: ${{ env.last_run == 'not_started' }}
         uses: actions/setup-node@v3
         with:
           node-version: "20"
 
       - name: Install dependencies
-        if: ${{ steps.check_main_workflow.outputs.last_run == 'not_started' }}
+        if: ${{ env.last_run == 'not_started' }}
         run: npm install
 
       - name: Run Puppeteer script
-        if: ${{ steps.check_main_workflow.outputs.last_run == 'not_started' }}
+        if: ${{ env.last_run == 'not_started' }}
         env:
           DNI: ${{ secrets.DNI }}
           PASSWORD: ${{ secrets.PASSWORD }}
