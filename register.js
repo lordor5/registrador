@@ -96,7 +96,7 @@ function calculateDelayUntil10AM() {
 
   // Set the target time to 10:00 AM in Spain
   const targetTime = new Date(now);
-  targetTime.setHours(10, 0, 0, 0); // 10:00 AM
+  targetTime.setHours(10, 0, 20, 0); // 10:00 AM
 
   let delay = targetTime - now;
 
