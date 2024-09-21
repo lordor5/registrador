@@ -27,7 +27,7 @@ async function register(arr) {
   const page = await browser.newPage();
 
   while (arr.length !== 0) {
-    console.log(arr);
+    console.log("Horas solicitadas: ", arr);
 
     // Navigate to the login page
     await page.goto(
@@ -37,6 +37,7 @@ async function register(arr) {
     // Check if input field with name="dni" exists
     const dniExists = await page.$('input[name="dni"]');
     if (dniExists) {
+      console.log("Sesión caducada, iniciando sesión ...");
       // Fill in the username and password
       await page.type('input[name="dni"]', process.env.DNI);
       await page.type('input[name="clau"]', process.env.PASSWORD);
@@ -66,7 +67,7 @@ async function register(arr) {
       return cells.map((cell) => cell.innerText.trim()); // Get the text content
     });
 
-    console.log(tableData); // Log the array of text elements from the table
+    console.log("Horas ya inscritas: ", tableData); // Log the array of text elements from the table
 
     // Extract numbers from both arrays
     const musculacionNumbers = tableData.map(extractNumber); // ['010', '021', '040', '057', '058']
@@ -77,19 +78,18 @@ async function register(arr) {
       (num) => !musculacionNumbers.includes(num)
     );
 
-    console.log("Different Numbers in MUS:", differentNumbers);
-
     arr = Array.from(differentNumbers.map((num) => `MUS${num}`));
+    console.log("Horas no inscritas: ", arr);
 
     for (let i = 0; i < arr.length; i++) {
-      console.log("Restantes:", arr);
       let text = arr[i];
-      let reg = await page.evaluate((text) => {
+      let reg = await page.evaluate(async (text) => {
         const link = Array.from(document.querySelectorAll("a")).find((a) =>
           a.innerText.includes(text)
         );
         if (link) {
           link.click();
+          await page.waitForNavigation();
           return text;
         }
         return null;
@@ -101,13 +101,13 @@ async function register(arr) {
         arr.splice(i, 1);
         i--;
       }
-      await page.waitForNavigation();
     }
 
     if (arr.length === 0) {
       break;
     }
-    await new Promise((resolve) => setTimeout(resolve, 1000)); //300000 = 5 minutos
+    console.log("Esperando 5 minutos...");
+    await new Promise((resolve) => setTimeout(resolve, 300000)); //300000 = 5 minutos
   }
 
   await browser.close();
