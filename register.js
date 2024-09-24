@@ -16,101 +16,130 @@ async function main() {
   // Load the time from the time.json file
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
-  await register(registros);
-}
-main();
-
-async function register(arr) {
   const browser = await puppeteer.launch({
     headless: false,
   });
-  const page = await browser.newPage();
 
-  while (arr.length !== 0) {
-    console.log("Horas solicitadas: ", arr);
+  console.log("Registros a registrar: ", registros);
 
-    // Navigate to the login page
-    await page.goto(
-      "https://intranet.upv.es/pls/soalu/est_intranet.NI_Dual?P_IDIOMA=c"
+  let arr = registros;
+  let page;
+  while (arr.length > 0) {
+    page = await logIn(browser, page);
+
+    let iterationsBeforeLogIn = 120 + Math.floor(Math.random() * 40 - 20);
+    console.log(
+      `Realizando ${iterationsBeforeLogIn} iteraciones antes de iniciar sesión...`
     );
+    for (let i = 0; i < iterationsBeforeLogIn; i++) {
+      arr = await register(registros, page);
 
-    // Check if input field with name="dni" exists
-    const dniExists = await page.$('input[name="dni"]');
-    if (dniExists) {
-      console.log("Sesión caducada, iniciando sesión ...");
-      // Fill in the username and password
-      await page.type('input[name="dni"]', process.env.DNI);
-      await page.type('input[name="clau"]', process.env.PASSWORD);
-
-      // Submit the login form
-      await page.click('input[type="submit"]');
-    }
-
-    // Navigate to the registration page
-    await page.goto(
-      "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
-    );
-
-    // Listen for console messages from the browser context
-    page.on("console", (msg) => {
-      // Output browser's console messages to Node.js console
-      console.log(`BROWSER LOG: ${msg.text()}`);
-    });
-
-    // Extract text elements from the table to know which ones are already registered
-    const tableData = await page.evaluate(() => {
-      const cells = Array.from(document.querySelectorAll("td")).filter((cell) =>
-        cell.innerText.startsWith("MUSCULACIÓN")
-      );
-
-      // Return the text content of all matching cells that strictly contain "MUSCULACIÓN"
-      return cells.map((cell) => cell.innerText.trim()); // Get the text content
-    });
-
-    console.log("Horas ya inscritas: ", tableData); // Log the array of text elements from the table
-
-    // Extract numbers from both arrays
-    const musculacionNumbers = tableData.map(extractNumber); // ['010', '021', '040', '057', '058']
-    const musNumbers = arr.map(extractNumber); // ['010', '021', '040']
-
-    // Find numbers in MUS that are not in MUSCULACIÓN
-    const differentNumbers = musNumbers.filter(
-      (num) => !musculacionNumbers.includes(num)
-    );
-
-    arr = Array.from(differentNumbers.map((num) => `MUS${num}`));
-    console.log("Horas no inscritas: ", arr);
-
-    for (let i = 0; i < arr.length; i++) {
-      let text = arr[i];
-      let reg = await page.evaluate(async (text) => {
-        const link = Array.from(document.querySelectorAll("a")).find((a) =>
-          a.innerText.includes(text)
-        );
-        if (link) {
-          link.click();
-          await page.waitForNavigation();
-          return text;
-        }
-        return null;
-      }, text);
-
-      console.log("Registrado: ", reg);
-
-      if (reg === arr[i]) {
-        arr.splice(i, 1);
-        i--;
+      if (arr.length === 0) {
+        break;
       }
-    }
 
-    if (arr.length === 0) {
-      break;
+      let waitingTime = (20 + Math.floor(Math.random() * 20 - 10)) * 1000;
+      console.log(`Esperando ${waitingTime / 1000} segundos...`);
+      await new Promise((resolve) => setTimeout(resolve, waitingTime)); //300000 = 5 minutos
     }
-    console.log("Esperando 5 minutos...");
-    await new Promise((resolve) => setTimeout(resolve, 300000)); //300000 = 5 minutos
+  }
+  await browser.close();
+}
+main();
+
+async function register(arr, page) {
+  //const page = await browser.newPage();
+
+  console.log("Horas solicitadas: ", arr);
+
+  // Navigate to the registration page
+  await page.goto(
+    "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
+  );
+
+  // Listen for console messages from the browser context
+  page.on("console", (msg) => {
+    // Output browser's console messages to Node.js console
+    console.log(`BROWSER LOG: ${msg.text()}`);
+  });
+
+  // Extract text elements from the table to know which ones are already registered
+  const tableData = await page.evaluate(() => {
+    const cells = Array.from(document.querySelectorAll("td")).filter((cell) =>
+      cell.innerText.startsWith("MUSCULACIÓN")
+    );
+
+    // Return the text content of all matching cells that strictly contain "MUSCULACIÓN"
+    return cells.map((cell) => cell.innerText.trim()); // Get the text content
+  });
+
+  console.log("Horas ya inscritas: ", tableData); // Log the array of text elements from the table
+
+  // Extract numbers from both arrays
+  const musculacionNumbers = tableData.map(extractNumber); // ['010', '021', '040', '057', '058']
+  const musNumbers = arr.map(extractNumber); // ['010', '021', '040']
+
+  // Find numbers in MUS that are not in MUSCULACIÓN
+  const differentNumbers = musNumbers.filter(
+    (num) => !musculacionNumbers.includes(num)
+  );
+
+  arr = Array.from(differentNumbers.map((num) => `MUS${num}`));
+  console.log("Horas no inscritas: ", arr);
+
+  for (let i = 0; i < arr.length; i++) {
+    let text = arr[i];
+    let reg = await page.evaluate(async (text) => {
+      const link = Array.from(document.querySelectorAll("a")).find((a) =>
+        a.innerText.includes(text)
+      );
+      if (link) {
+        link.click();
+        return text;
+      }
+      return null;
+    }, text);
+
+    if (reg === arr[i]) {
+      console.log("Registrado: ", reg);
+      await page.waitForNavigation();
+
+      arr.splice(i, 1);
+      i--;
+    }
+  }
+  // if (arr.length === 0) {
+  //   break;
+  // }
+
+  return arr;
+}
+
+async function logIn(browser, pageBefore) {
+  let page;
+  if (!pageBefore) {
+    page = await browser.newPage();
+  } else {
+    page = pageBefore;
   }
 
-  await browser.close();
+  // Navigate to the login page
+  await page.goto(
+    "https://intranet.upv.es/pls/soalu/est_intranet.NI_Dual?P_IDIOMA=c"
+  );
+
+  // Check if input field with name="dni" exists
+  const dniExists = await page.$('input[name="dni"]');
+  if (dniExists) {
+    console.log("Sesión caducada, iniciando sesión ...");
+    // Fill in the username and password
+    await page.type('input[name="dni"]', process.env.DNI);
+    await page.type('input[name="clau"]', process.env.PASSWORD);
+
+    // Submit the login form
+    await page.click('input[type="submit"]');
+  }
+  return page;
 }
 
 // Extract numeric part from each string
