@@ -16,7 +16,7 @@ async function main() {
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
   });
 
   console.log("Registros a registrar: ", registros);
