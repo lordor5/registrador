@@ -1,10 +1,13 @@
 const puppeteer = require("puppeteer");
 const iPhone = puppeteer.KnownDevices["iPhone 13"];
+
 const fs = require("fs");
 const dotenv = require("dotenv");
 dotenv.config();
 
 //"registros": ["MUS010", "MUS021", "MUS040", "MUS057", "MUS058"]
+
+//const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function main() {
   const delay = calculateDelayUntil10AM();
@@ -23,17 +26,15 @@ async function main() {
 
   let arr = registros;
   let page;
-  const isMobile = true; // Change to `false` for PC mode
-
   while (arr.length > 0) {
-    page = await logIn(browser, page, isMobile);
+    page = await logIn(browser, page);
 
     let iterationsBeforeLogIn = 120 + Math.floor(Math.random() * 40 - 20);
     console.log(
       `Realizando ${iterationsBeforeLogIn} iteraciones antes de iniciar sesión...`
     );
     for (let i = 0; i < iterationsBeforeLogIn; i++) {
-      arr = await register(registros, page, isMobile);
+      arr = await register(registros, page);
 
       if (arr.length === 0) {
         break;
@@ -48,34 +49,40 @@ async function main() {
 }
 main();
 
-async function register(arr, page, isMobile) {
-  console.log("Horas solicitadas: ", arr);
+async function register(arr, page) {
+  //const page = await browser.newPage();
 
-  if (isMobile) {
-    await page.emulate(iPhone);
-  }
+  console.log("Horas solicitadas: ", arr);
+  await page.emulate(iPhone);
 
   // Navigate to the registration page
   await page.goto(
     "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
   );
 
+  // Listen for console messages from the browser context
   page.on("console", (msg) => {
+    // Output browser's console messages to Node.js console
     console.log(`BROWSER LOG: ${msg.text()}`);
   });
 
-  // Extract text elements from the table
+  // Extract text elements from the table to know which ones are already registered
   const tableData = await page.evaluate(() => {
     const cells = Array.from(document.querySelectorAll("td")).filter((cell) =>
       cell.innerText.startsWith("MUSCULACIÓN")
     );
-    return cells.map((cell) => cell.innerText.trim());
+
+    // Return the text content of all matching cells that strictly contain "MUSCULACIÓN"
+    return cells.map((cell) => cell.innerText.trim()); // Get the text content
   });
 
-  console.log("Horas ya inscritas: ", tableData);
+  console.log("Horas ya inscritas: ", tableData); // Log the array of text elements from the table
 
-  const musculacionNumbers = tableData.map(extractNumber);
-  const musNumbers = arr.map(extractNumber);
+  // Extract numbers from both arrays
+  const musculacionNumbers = tableData.map(extractNumber); // ['010', '021', '040', '057', '058']
+  const musNumbers = arr.map(extractNumber); // ['010', '021', '040']
+
+  // Find numbers in MUS that are not in MUSCULACIÓN
   const differentNumbers = musNumbers.filter(
     (num) => !musculacionNumbers.includes(num)
   );
@@ -86,15 +93,12 @@ async function register(arr, page, isMobile) {
   for (let i = 0; i < arr.length; i++) {
     let text = arr[i];
     let reg = await page.evaluate(async (text) => {
-      const liElements = Array.from(
-        document.querySelectorAll('li[data-theme="c"]')
+      const link = Array.from(document.querySelectorAll("a")).find((a) =>
+        a.innerText.includes(text)
       );
-      for (const li of liElements) {
-        const aTag = li.querySelector("a"); // Targeting the <a> inside <li>
-        if (aTag && aTag.innerText.includes("Inscribirse")) {
-          aTag.click();
-          return text;
-        }
+      if (link) {
+        link.click();
+        return text;
       }
       return null;
     }, text);
@@ -102,29 +106,24 @@ async function register(arr, page, isMobile) {
     if (reg === arr[i]) {
       console.log("Registrado: ", reg);
       await page.waitForNavigation();
+
       arr.splice(i, 1);
       i--;
     }
   }
+  // if (arr.length === 0) {
+  //   break;
+  // }
 
   return arr;
 }
 
-async function logIn(browser, pageBefore, isMobile) {
+async function logIn(browser, pageBefore) {
   let page;
   if (!pageBefore) {
     page = await browser.newPage();
   } else {
     page = pageBefore;
-  }
-
-  if (isMobile) {
-    await page.emulate(iPhone);
-  } else {
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
-    );
-    await page.setViewport({ width: 1200, height: 800 });
   }
 
   // Navigate to the login page
@@ -146,23 +145,32 @@ async function logIn(browser, pageBefore, isMobile) {
   return page;
 }
 
+// Extract numeric part from each string
 const extractNumber = (str) => {
-  const match = str.match(/\d+/);
-  return match ? match[0] : null;
+  const match = str.match(/\d+/); // Find numeric part using regex
+  return match ? match[0] : null; // Return the number if found, otherwise null
 };
 
+// Helper function to calculate delay until 10 AM in Spain (CET)
 function calculateDelayUntil10AM() {
   const now = new Date();
-  const currentOffset = now.getTimezoneOffset();
-  const spainOffset = -120;
 
+  // Spain is usually in the Central European Time (CET) zone, UTC+1 or UTC+2 (during daylight saving time)
+  const currentOffset = now.getTimezoneOffset(); // in minutes
+  const spainOffset = -120; // Assuming it's UTC+2 for Daylight Saving Time (adjust accordingly)
+
+  // Convert current time to Spain's time by adjusting the timezone offset
   now.setMinutes(now.getMinutes() + currentOffset - spainOffset);
+
+  // Set the target time to 10:00 AM in Spain
   const targetTime = new Date(now);
-  targetTime.setHours(10, 0, 10, 0);
+  targetTime.setHours(10, 0, 10, 0); // 10:00 AM
 
   let delay = targetTime - now;
+
+  // If it's already past 10:00 AM today, set the target to 10:00 AM tomorrow
   if (now > targetTime) {
-    delay = 0;
+    delay = 0; // Set to the next day
   }
 
   console.log(`Waiting ${delay / 1000 / 60} minutes until 10 AM Spain time...`);
