@@ -1,4 +1,6 @@
 const puppeteer = require("puppeteer");
+const iPhone = puppeteer.KnownDevices["iPhone 13"];
+
 const fs = require("fs");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -25,9 +27,11 @@ main();
 
 async function register(arr) {
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false,
+    devtools: true, // Enable the Chrome DevTools protocol
   }); // Change to true for headless mode
   const page = await browser.newPage();
+  await page.emulate(iPhone);
 
   // Navigate to the login page
   await page.goto(
