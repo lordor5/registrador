@@ -16,7 +16,8 @@ async function main() {
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: true, //false for debugging
+    userDataDir: "/tmp/myChromeSession",
   });
 
   console.log("Registros a registrar: ", registros);
@@ -54,7 +55,6 @@ async function register(arr, page, isMobile) {
   if (isMobile) {
     await page.emulate(iPhone);
   }
-
   // Navigate to the registration page
   await page.goto(
     "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
@@ -64,12 +64,37 @@ async function register(arr, page, isMobile) {
     console.log(`BROWSER LOG: ${msg.text()}`);
   });
 
-  // Extract text elements from the table
+  // Wait for the specific h2 element with the "Grupos Inscritos" text
+  await page.waitForSelector("h2.cabcontainer");
+
+  // Extract titles of each li element under the target h2
+  // Extract the text from the <font> element inside each li under the specified h2
   const tableData = await page.evaluate(() => {
-    const cells = Array.from(document.querySelectorAll("td")).filter((cell) =>
-      cell.innerText.startsWith("MUSCULACIÓN")
+    // Find all the <h2> elements with the class "cabcontainer"
+    const h2Elements = document.querySelectorAll("h2.cabcontainer");
+
+    // Check if the correct h2 is found
+    const h2 = Array.from(h2Elements).find((h2) =>
+      h2.textContent.includes("Grupos Inscritos:")
     );
-    return cells.map((cell) => cell.innerText.trim());
+    if (!h2) {
+      console.log("Couldn't find the h2 element with 'Grupos Inscritos'");
+      return []; // Return empty array if not found
+    }
+
+    // Find the next <ul> sibling after the <h2> (or the closest <ul> in the same section)
+    const ul = h2.nextElementSibling;
+    if (!ul || !ul.classList.contains("ui-listview")) {
+      console.log("Couldn't find the corresponding <ul> element");
+      return [];
+    }
+
+    // Extract the text from the <font> tag in each <li> element
+    const liElements = ul.querySelectorAll("li");
+    return Array.from(liElements).map((li) => {
+      const fontElement = li.querySelector("font"); // Target the <font> tag
+      return fontElement ? fontElement.textContent.trim() : "No Title";
+    });
   });
 
   console.log("Horas ya inscritas: ", tableData);
@@ -83,25 +108,49 @@ async function register(arr, page, isMobile) {
   arr = Array.from(differentNumbers.map((num) => `MUS${num}`));
   console.log("Horas no inscritas: ", arr);
 
+  // if (isMobile) {
+  //   await page.emulate(iPhone);
+  // }
+  // await page.goto(
+  //   "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
+  // );
+
   for (let i = 0; i < arr.length; i++) {
     let text = arr[i];
+    // let reg = await page.evaluate(async (text) => {
+    //   const link = Array.from(document.querySelectorAll("a")).find((a) =>
+    //     a.innerText.includes(text)
+    //   );
+    //   if (link) {
+    //     link.click();
+    //     return text;
+    //   }
+    //   return null;
+    // }, text);
+
     let reg = await page.evaluate(async (text) => {
-      const liElements = Array.from(
-        document.querySelectorAll('li[data-theme="c"]')
+      // Find the li element that contains the text
+      const listItem = Array.from(document.querySelectorAll("li")).find((li) =>
+        li.innerText.includes(text)
       );
-      for (const li of liElements) {
-        const aTag = li.querySelector("a"); // Targeting the <a> inside <li>
-        if (aTag && aTag.innerText.includes("Inscribirse")) {
-          aTag.click();
+      // If the li is found
+      if (listItem) {
+        // Find the <a> tag within the li and click it if it exists
+        const link = listItem.querySelector("a");
+        console.log(link);
+        if (link) {
+          link.click();
           return text;
         }
       }
+
       return null;
     }, text);
 
     if (reg === arr[i]) {
       console.log("Registrado: ", reg);
       await page.waitForNavigation();
+
       arr.splice(i, 1);
       i--;
     }
@@ -118,14 +167,10 @@ async function logIn(browser, pageBefore, isMobile) {
     page = pageBefore;
   }
 
-  if (isMobile) {
-    await page.emulate(iPhone);
-  } else {
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
-    );
-    await page.setViewport({ width: 1200, height: 800 });
-  }
+  await page.setUserAgent(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
+  );
+  await page.setViewport({ width: 1200, height: 800 });
 
   // Navigate to the login page
   await page.goto(
