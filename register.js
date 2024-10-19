@@ -60,9 +60,9 @@ async function register(arr, page, isMobile) {
     "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
   );
 
-  page.on("console", (msg) => {
-    console.log(`BROWSER LOG: ${msg.text()}`);
-  });
+  // page.on("console", (msg) => {
+  //   console.log(`BROWSER LOG: ${msg.text()}`);
+  // });
 
   // Wait for the specific h2 element with the "Grupos Inscritos" text
   await page.waitForSelector("h2.cabcontainer");
