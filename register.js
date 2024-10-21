@@ -197,7 +197,15 @@ const extractNumber = (str) => {
 };
 
 function calculateDelayUntil10AM() {
+  
   const now = new Date();
+
+ // Check if it's Saturday (day 6)
+  if (now.getDay() !== 6) {
+    console.log("It's not Saturday, no need to wait.");
+    return 0;
+  }
+  
   const currentOffset = now.getTimezoneOffset();
   const spainOffset = -120;
 
