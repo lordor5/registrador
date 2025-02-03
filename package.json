@@ -13,6 +13,7 @@
     "dotenv": "^16.4.5",
     "puppeteer": "^23.3.0",
     "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-devtools": "^2.4.6"
+    "puppeteer-extra-plugin-devtools": "^2.4.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }
