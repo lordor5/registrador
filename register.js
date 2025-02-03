@@ -16,7 +16,7 @@ async function main() {
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
   const browser = await puppeteer.launch({
-    headless: true, //false for debugging
+    headless: false, //false for debugging
     userDataDir: "/tmp/myChromeSession",
   });
 
@@ -174,20 +174,21 @@ async function logIn(browser, pageBefore, isMobile) {
 
   // Navigate to the login page
   await page.goto(
-    "https://intranet.upv.es/pls/soalu/est_intranet.NI_Dual?P_IDIOMA=c"
+    "https://cas.upv.es/cas/login?service=https%3A%2F%2Fwww.upv.es%2Fpls%2Fsoalu%2Fsic_intracas.app_intranet%3FP_CUA%3Dmiupv"
   );
 
   // Check if input field with name="dni" exists
-  const dniExists = await page.$('input[name="dni"]');
-  if (dniExists) {
+  const inputExists = await page.$('input[name="username"]');
+  if (inputExists) {
     console.log("Sesión caducada, iniciando sesión ...");
     // Fill in the username and password
-    await page.type('input[name="dni"]', process.env.DNI);
-    await page.type('input[name="clau"]', process.env.PASSWORD);
+    await page.type('input[name="username"]', process.env.DNI);
+    await page.type('input[type="password"]', process.env.PASSWORD);
 
     // Submit the login form
-    await page.click('input[type="submit"]');
+    await page.click('button[name="submitBtn"]');
   }
+
   return page;
 }
 
@@ -197,15 +198,14 @@ const extractNumber = (str) => {
 };
 
 function calculateDelayUntil10AM() {
-  
   const now = new Date();
 
- // Check if it's Saturday (day 6)
+  // Check if it's Saturday (day 6)
   if (now.getDay() !== 6) {
     console.log("It's not Saturday, no need to wait.");
     return 0;
   }
-  
+
   const currentOffset = now.getTimezoneOffset();
   const spainOffset = -120;
 
