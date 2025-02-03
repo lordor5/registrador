@@ -63,7 +63,7 @@ main();
 
 async function horasRegistradas(page) {
   await page.goto(
-    "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
+    "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=movil&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
   );
   await page.waitForSelector("h2.cabcontainer");
 
@@ -71,7 +71,7 @@ async function horasRegistradas(page) {
   // Extract the text from the <font> element inside each li under the specified h2
   const tableData = await page.evaluate(() => {
     // Find all the <h2> elements with the class "cabcontainer"
-    const h2Elements = document.querySelectorAll("h2.upv_enlacelista");
+    const h2Elements = document.querySelectorAll("h2.cabcontainer");
 
     // Check if the correct h2 is found
     const h2 = Array.from(h2Elements).find((h2) =>
@@ -108,12 +108,12 @@ async function register(arr, page) {
     "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
   );
 
-  if (isMobile) {
-    await page.emulate(iPhone);
-  }
-  await page.goto(
-    "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
-  );
+  // if (isMobile) {
+  //   await page.emulate(iPhone);
+  // }
+  // await page.goto(
+  //   "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
+  // );
 
   for (let i = 0; i < arr.length; i++) {
     let text = arr[i];
@@ -275,16 +275,17 @@ async function logIn(browser, pageBefore) {
   );
 
   // Check if input field with name="dni" exists
-  const dniExists = await page.$('input[name="username"]');
-  if (dniExists) {
+  const inputExists = await page.$('input[name="username"]');
+  if (inputExists) {
     console.log("Sesión caducada, iniciando sesión ...");
     // Fill in the username and password
     await page.type('input[name="username"]', process.env.DNI);
-    await page.type('input[name="password"]', process.env.PASSWORD);
+    await page.type('input[type="password"]', process.env.PASSWORD);
 
     // Submit the login form
-    await page.click('button[type="submit"]');
+    await page.click('button[name="submitBtn"]');
   }
+
   return page;
 }
 
@@ -295,6 +296,13 @@ const extractNumber = (str) => {
 
 function calculateDelayUntil10AM() {
   const now = new Date();
+
+  // Check if it's Saturday (day 6)
+  if (now.getDay() !== 6) {
+    console.log("It's not Saturday, no need to wait.");
+    return 0;
+  }
+
   const currentOffset = now.getTimezoneOffset();
   const spainOffset = -120;
 
