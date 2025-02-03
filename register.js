@@ -20,7 +20,7 @@ async function main() {
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
   const browser = await puppeteer.launch({
-    headless: false, //false for debugging
+    headless: true, //false for debugging
     userDataDir: "/tmp/myChromeSession",
   });
 
