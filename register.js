@@ -5,6 +5,7 @@ const devtools = require("puppeteer-extra-plugin-devtools")();
 //const iPhone = puppeteer.KnownDevices["iPhone 13"];
 const fs = require("fs");
 const dotenv = require("dotenv");
+const { log, table } = require("console");
 dotenv.config();
 
 //"registros": ["MUS010", "MUS021", "MUS040", "MUS057", "MUS058"]
@@ -20,26 +21,30 @@ async function main() {
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
   const browser = await puppeteer.launch({
-    headless: true, //false for debugging
+    headless: false, //false for debugging
     userDataDir: "/tmp/myChromeSession",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
-  console.log("Registros a registrar: ", registros);
+  console.log("Horas para registrar: ", registros);
 
   let page;
   let arr = registros; //await horasRegistradas(page);
 
   while (arr.length > 0) {
     page = await logIn(browser, page);
-    console.log(await horasRegistradas(page));
-    // const musculacionNumbers = tableData.map(extractNumber);
-    // const musNumbers = arr.map(extractNumber);
-    // const differentNumbers = musNumbers.filter(
-    // (num) => !musculacionNumbers.includes(num)
-    //  );
 
-    //arr = Array.from(differentNumbers.map((num) => `MUS${num}`));
+    tableData = await horasRegistradas(page);
+    console.log("Horas ya inscritas: ", tableData);
+
+    const musculacionNumbers = tableData.map(extractNumber);
+    const musNumbers = arr.map(extractNumber);
+    const differentNumbers = musNumbers.filter(
+      (num) => !musculacionNumbers.includes(num)
+    );
+
+    arr = Array.from(differentNumbers.map((num) => `MUS${num}`));
+
     console.log("Horas no inscritas: ", arr);
 
     let iterationsBeforeLogIn = 120 + Math.floor(Math.random() * 40 - 20);
@@ -47,6 +52,7 @@ async function main() {
       `Realizando ${iterationsBeforeLogIn} iteraciones antes de iniciar sesión...`
     );
     for (let i = 0; i < iterationsBeforeLogIn; i++) {
+      console.log("Horas solicitadas: ", arr);
       arr = await register(arr, page);
 
       if (arr.length === 0) {
@@ -62,10 +68,11 @@ async function main() {
 }
 main();
 
+const horasRegistradasUrl =
+  "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=movil&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad";
 async function horasRegistradas(page) {
-  await page.goto(
-    "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=movil&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
-  );
+  await page.goto(horasRegistradasUrl, { waitUntil: "load" });
+  //await page.waitForNavigation();
   await page.waitForSelector("h2.cabcontainer");
 
   // Extract titles of each li element under the target h2
@@ -98,36 +105,33 @@ async function horasRegistradas(page) {
     });
   });
 
-  console.log("Horas ya inscritas: ", tableData);
+  return tableData;
 }
 
+const PaginaInscripcion =
+  "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad";
 async function register(arr, page) {
-  console.log("Horas solicitadas: ", arr);
+  //for unit testing
+  if (!page) {
+    page = await logIn();
+  }
+  if (!arr) arr = ["MUS010", "MUS021", "MUS040", "MUS057", "MUS075"];
 
   // Navigate to the registration page
-  await page.goto(
-    "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
-  );
-
-  // if (isMobile) {
-  //   await page.emulate(iPhone);
-  // }
-  // await page.goto(
-  //   "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad"
-  // );
+  await page.goto(PaginaInscripcion, { waitUntil: "load" });
 
   for (let i = 0; i < arr.length; i++) {
     let text = arr[i];
 
     let reg = await page.evaluate(async (text) => {
       // Find the li element that contains the text
-      const listItem = Array.from(document.querySelectorAll("li")).find((li) =>
-        li.innerText.includes(text)
+      const tableItem = Array.from(document.querySelectorAll("td")).find((td) =>
+        td.innerText.includes(text)
       );
       // If the li is found
-      if (listItem) {
+      if (tableItem) {
         // Find the <a> tag within the li and click it if it exists
-        const link = listItem.querySelector("a");
+        const link = tableItem.querySelector("a");
         console.log(link);
         if (link) {
           link.click();
@@ -247,12 +251,21 @@ async function registerMobile(arr, page, isMobile) {
   return arr;
 }
 
+const LogInPage =
+  "https://cas.upv.es/cas/login?service=https%3A%2F%2Fwww.upv.es%2Fpls%2Fsoalu%2Fsic_intracas.app_intranet%3FP_CUA%3Dmiupv";
+
 async function logIn(browser, pageBefore) {
-  let page;
+  //for unit testing
+  if (!browser) {
+    browser = await puppeteer.launch({
+      headless: false, //false for debugging
+      userDataDir: "/tmp/myChromeSession",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  }
+  let page = pageBefore;
   if (!pageBefore) {
     page = await browser.newPage();
-  } else {
-    page = pageBefore;
   }
 
   await page.setViewport({ width: 1200, height: 800 });
@@ -266,16 +279,13 @@ async function logIn(browser, pageBefore) {
       get: () => [1, 2, 3, 4, 5],
     });
     Object.defineProperty(navigator, "languages", {
-      get: () => ["en-US", "en"],
+      get: () => ["es-ES", "es"],
     });
   });
 
-  // Navigate to the login page
-  await page.goto(
-    "https://cas.upv.es/cas/login?service=https%3A%2F%2Fwww.upv.es%2Fpls%2Fsoalu%2Fsic_intracas.app_intranet%3FP_CUA%3Dmiupv"
-  );
+  await page.goto(LogInPage, { waitUntil: "load" });
 
-  // Check if input field with name="dni" exists
+  // Verificar que hace falta volver a iniciar sesión, sino redirige a la intranet y no hay formulario
   const inputExists = await page.$('input[name="username"]');
   if (inputExists) {
     console.log("Sesión caducada, iniciando sesión ...");
@@ -286,6 +296,14 @@ async function logIn(browser, pageBefore) {
     // Submit the login form
     await page.click('button[name="submitBtn"]');
   }
+  await page.waitForNavigation();
+
+  // Verificar que no haya error de sesión
+  if (LogInPage != (await page.url())) console.log("Inicio de sesión correcto");
+  else
+    console.log(
+      "Inicio de sesión fallido, revisa las credenciales o cambios en la pagina"
+    );
 
   return page;
 }
