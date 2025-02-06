@@ -4,6 +4,7 @@ on:
   workflow_dispatch: # Allows manual trigger
   schedule:
     - cron: "30 7 * * 6"
+    - cron: "30 7 * * 5"
 
 jobs:
   puppeteer-job:
