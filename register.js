@@ -146,6 +146,7 @@ async function register(arr, page) {
       console.log("Registrado: ", reg);
       await page.waitForNavigation();
 
+      await delay(2000);
       arr.splice(i, 1);
       i--;
     }
@@ -336,4 +337,10 @@ function calculateDelayUntil10AM() {
 
   console.log(`Waiting ${delay / 1000 / 60} minutes until 10 AM Spain time...`);
   return delay;
+}
+
+function delay(time) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, time);
+  });
 }
