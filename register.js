@@ -328,7 +328,7 @@ function calculateDelayUntil10AM() {
 
   now.setMinutes(now.getMinutes() + currentOffset - spainOffset);
   const targetTime = new Date(now);
-  targetTime.setHours(10, 0, 10, 0);
+  targetTime.setHours(10, 1, 0, 0);
 
   let delay = targetTime - now;
   if (now > targetTime) {
