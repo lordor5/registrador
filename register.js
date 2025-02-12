@@ -5,7 +5,6 @@ const devtools = require("puppeteer-extra-plugin-devtools")();
 //const iPhone = puppeteer.KnownDevices["iPhone 13"];
 const fs = require("fs");
 const dotenv = require("dotenv");
-const { log, table } = require("console");
 dotenv.config();
 
 //"registros": ["MUS010", "MUS021", "MUS040", "MUS057", "MUS058"]
@@ -21,7 +20,7 @@ async function main() {
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
   const browser = await puppeteer.launch({
-    headless: false, //false for debugging
+    headless: true, //false for debugging
     userDataDir: "/tmp/myChromeSession",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
@@ -296,8 +295,8 @@ async function logIn(browser, pageBefore) {
 
     // Submit the login form
     await page.click('button[name="submitBtn"]');
+    await page.waitForNavigation();
   }
-  await page.waitForNavigation();
 
   // Verificar que no haya error de sesión
   if (LogInPage != (await page.url())) console.log("Inicio de sesión correcto");
