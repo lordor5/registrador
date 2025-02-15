@@ -328,7 +328,7 @@ function calculateDelayUntil10AM() {
   
   // Set the target time to 10:00:00.000 in Spain time.
   const targetTime = new Date(spainNow);
-  targetTime.setHours(10, 0, 0, 0);
+  targetTime.setHours(10, 0, 20, 0);
   
   // Calculate the delay until 10 AM. If it's already past 10 AM Spain time, set delay to 0.
   let delay = targetTime - spainNow;
