@@ -315,28 +315,31 @@ const extractNumber = (str) => {
 
 function calculateDelayUntil10AM() {
   const now = new Date();
-
+  
   // Check if it's Saturday (day 6)
   if (now.getDay() !== 6) {
     console.log("It's not Saturday, no need to wait.");
     return 0;
   }
-
-  const currentOffset = now.getTimezoneOffset();
-  const spainOffset = -120;
-
-  now.setMinutes(now.getMinutes() + currentOffset - spainOffset);
-  const targetTime = new Date(now);
-  targetTime.setHours(10, 1, 0, 0);
-
-  let delay = targetTime - now;
-  if (now > targetTime) {
+  
+  // Convert current local time to Spain time using the Intl API.
+  // This conversion automatically accounts for daylight saving time changes.
+  const spainNow = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" }));
+  
+  // Set the target time to 10:00:00.000 in Spain time.
+  const targetTime = new Date(spainNow);
+  targetTime.setHours(10, 0, 0, 0);
+  
+  // Calculate the delay until 10 AM. If it's already past 10 AM Spain time, set delay to 0.
+  let delay = targetTime - spainNow;
+  if (spainNow > targetTime) {
     delay = 0;
   }
-
+  
   console.log(`Waiting ${delay / 1000 / 60} minutes until 10 AM Spain time...`);
   return delay;
 }
+
 
 function delay(time) {
   return new Promise(function (resolve) {
