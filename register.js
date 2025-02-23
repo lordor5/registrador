@@ -17,7 +17,9 @@ async function main() {
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: false, //false for debugging
+    userDataDir: "/tmp/myChromeSession",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   console.log("Registros a registrar: ", registros);
@@ -152,24 +154,34 @@ const extractNumber = (str) => {
 function calculateDelayUntil10AM() {
   const now = new Date();
 
-  // Spain is usually in the Central European Time (CET) zone, UTC+1 or UTC+2 (during daylight saving time)
-  const currentOffset = now.getTimezoneOffset(); // in minutes
-  const spainOffset = -120; // Assuming it's UTC+2 for Daylight Saving Time (adjust accordingly)
+  // Check if it's Saturday (day 6)
+  if (now.getDay() !== 6) {
+    console.log("It's not Saturday, no need to wait.");
+    return 0;
+  }
 
-  // Convert current time to Spain's time by adjusting the timezone offset
-  now.setMinutes(now.getMinutes() + currentOffset - spainOffset);
+  // Convert current local time to Spain time using the Intl API.
+  // This conversion automatically accounts for daylight saving time changes.
+  const spainNow = new Date(
+    now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })
+  );
 
-  // Set the target time to 10:00 AM in Spain
-  const targetTime = new Date(now);
-  targetTime.setHours(10, 0, 10, 0); // 10:00 AM
+  // Set the target time to 10:00:00.000 in Spain time.
+  const targetTime = new Date(spainNow);
+  targetTime.setHours(10, 0, 20, 0);
 
-  let delay = targetTime - now;
-
-  // If it's already past 10:00 AM today, set the target to 10:00 AM tomorrow
-  if (now > targetTime) {
-    delay = 0; // Set to the next day
+  // Calculate the delay until 10 AM. If it's already past 10 AM Spain time, set delay to 0.
+  let delay = targetTime - spainNow;
+  if (spainNow > targetTime) {
+    delay = 0;
   }
 
   console.log(`Waiting ${delay / 1000 / 60} minutes until 10 AM Spain time...`);
   return delay;
+}
+
+function delay(time) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, time);
+  });
 }
