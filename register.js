@@ -10,6 +10,11 @@ dotenv.config();
 //"registros": ["MUS010", "MUS021", "MUS040", "MUS057", "MUS058"]
 puppeteer.use(StealthPlugin());
 
+let headless = false;
+if (!process.env.HEADLESS) headless = true;
+
+console.log(headless);
+
 async function main() {
   const delay = calculateDelayUntil10AM();
 
@@ -20,7 +25,7 @@ async function main() {
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
   const browser = await puppeteer.launch({
-    headless: true, //false for debugging
+    headless: headless, //false for debugging
     userDataDir: "/tmp/myChromeSession",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
@@ -258,7 +263,7 @@ async function logIn(browser, pageBefore) {
   //for unit testing
   if (!browser) {
     browser = await puppeteer.launch({
-      headless: false, //false for debugging
+      headless: headless, //false for debugging
       userDataDir: "/tmp/myChromeSession",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
