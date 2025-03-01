@@ -327,15 +327,17 @@ function calculateDelayUntil10AM() {
     return 0;
   }
 
-  const currentOffset = now.getTimezoneOffset();
-  const spainOffset = -120;
+  // Convert current local time to Spain time using the Intl API.
+  // This conversion automatically accounts for daylight saving time changes.
+  const spainNow = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" }));
 
-  now.setMinutes(now.getMinutes() + currentOffset - spainOffset);
-  const targetTime = new Date(now);
-  targetTime.setHours(10, 1, 0, 0);
+  // Set the target time to 10:00:00.000 in Spain time.
+  const targetTime = new Date(spainNow);
+  targetTime.setHours(10, 0, 20, 0);
 
-  let delay = targetTime - now;
-  if (now > targetTime) {
+  // Calculate the delay until 10 AM. If it's already past 10 AM Spain time, set delay to 0.
+  let delay = targetTime - spainNow;
+  if (spainNow > targetTime) {
     delay = 0;
   }
 
