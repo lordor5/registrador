@@ -10,6 +10,11 @@ dotenv.config();
 //"registros": ["MUS010", "MUS021", "MUS040", "MUS057", "MUS058"]
 puppeteer.use(StealthPlugin());
 
+let headless = false;
+if (!process.env.HEADLESS) headless = true;
+
+console.log(headless);
+
 async function main() {
   const delay = calculateDelayUntil10AM();
 
@@ -20,7 +25,7 @@ async function main() {
   const { registros } = JSON.parse(fs.readFileSync("time.json"));
 
   const browser = await puppeteer.launch({
-    headless: true, //false for debugging
+    headless: headless, //false for debugging
     userDataDir: "/tmp/myChromeSession",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
@@ -258,7 +263,7 @@ async function logIn(browser, pageBefore) {
   //for unit testing
   if (!browser) {
     browser = await puppeteer.launch({
-      headless: false, //false for debugging
+      headless: headless, //false for debugging
       userDataDir: "/tmp/myChromeSession",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
@@ -315,31 +320,32 @@ const extractNumber = (str) => {
 
 function calculateDelayUntil10AM() {
   const now = new Date();
-  
+
   // Check if it's Saturday (day 6)
   if (now.getDay() !== 6) {
     console.log("It's not Saturday, no need to wait.");
     return 0;
   }
-  
+
   // Convert current local time to Spain time using the Intl API.
   // This conversion automatically accounts for daylight saving time changes.
-  const spainNow = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" }));
-  
+  const spainNow = new Date(
+    now.toLocaleString("en-US", { timeZone: "Europe/Madrid" })
+  );
+
   // Set the target time to 10:00:00.000 in Spain time.
   const targetTime = new Date(spainNow);
   targetTime.setHours(10, 0, 20, 0);
-  
+
   // Calculate the delay until 10 AM. If it's already past 10 AM Spain time, set delay to 0.
   let delay = targetTime - spainNow;
   if (spainNow > targetTime) {
     delay = 0;
   }
-  
+
   console.log(`Waiting ${delay / 1000 / 60} minutes until 10 AM Spain time...`);
   return delay;
 }
-
 
 function delay(time) {
   return new Promise(function (resolve) {
