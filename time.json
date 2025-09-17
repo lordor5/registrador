@@ -1,3 +1,4 @@
 {
-  "registros": ["MUS006", "MUS025", "MUS055"]
+  "registros": ["MUS054"],
+  "para luego": ["MUS006", "MUS040", "MUS054"]
 }

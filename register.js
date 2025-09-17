@@ -13,7 +13,7 @@ puppeteer.use(StealthPlugin());
 let headless = false;
 if (!process.env.HEADLESS) headless = true;
 
-console.log(headless);
+console.log("Headless: " + headless);
 
 async function main() {
   const delay = calculateDelayUntil10AM();
@@ -73,7 +73,9 @@ async function main() {
 main();
 
 const horasRegistradasUrl =
-  "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=movil&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad";
+  "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6846&p_codacti=21809&p_vista=movil&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad";
+//"https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=movil&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad";
+
 async function horasRegistradas(page) {
   await page.goto(horasRegistradasUrl, { waitUntil: "load" });
   //await page.waitForNavigation();
@@ -113,7 +115,8 @@ async function horasRegistradas(page) {
 }
 
 const PaginaInscripcion =
-  "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad";
+  "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6846&p_codacti=21809&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad";
+// "https://intranet.upv.es/pls/soalu/sic_depact.HSemActividades?p_campus=V&p_tipoact=6799&p_codacti=21549&p_vista=intranet&p_idioma=c&p_solo_matricula_sn=&p_anc=filtro_actividad";
 async function register(arr, page) {
   //for unit testing
   if (!page) {
@@ -300,7 +303,7 @@ async function logIn(browser, pageBefore) {
 
     // Submit the login form
     await page.click('button[name="submitBtn"]');
-    await page.waitForNavigation();
+    //await page.waitForNavigation();
   }
 
   // Verificar que no haya error de sesión
