@@ -2,7 +2,7 @@ name: Fallback Workflow
 
 on:
   schedule:
-    - cron: "45 7 * * 6" # Runs every Sunday at 7:45 AM (15 minutes after the main workflow)
+    - cron: "45 7 * * 6,4" # Runs every Sunday at 7:45 AM (15 minutes after the main workflow)
   workflow_dispatch: # Allows manual trigger
 
 jobs:
