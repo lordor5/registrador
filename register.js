@@ -122,7 +122,6 @@ async function register(arr, page) {
   if (!page) {
     page = await logIn();
   }
-  if (!arr) arr = ["MUS010", "MUS021", "MUS040", "MUS057", "MUS075"];
 
   // Navigate to the registration page
   await page.goto(PaginaInscripcion, { waitUntil: "load" });
@@ -279,7 +278,7 @@ async function logIn(browser, pageBefore) {
   await page.setViewport({ width: 1200, height: 800 });
 
   await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   );
 
   await page.evaluateOnNewDocument(() => {
@@ -303,7 +302,7 @@ async function logIn(browser, pageBefore) {
 
     // Submit the login form
     await page.click('button[name="submitBtn"]');
-    //await page.waitForNavigation();
+    await page.waitForNavigation();
   }
 
   // Verificar que no haya error de sesión
