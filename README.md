@@ -6,5 +6,5 @@ La diferencia entre este y los otros bots que se pueden encontrar en GitHub radi
 Para usarlo simplemente hay que: 
 1. Clonar el repositorio
 2. Configurar el DNI y la contraseña en el apartado de secrets de github para mantenerlos seguros
-3 Configurar las horas en el archivo time.json. Hay que mantener el formato que usa la UPV para cada sesión como está en el archivo de ejemplo
+3. Configurar las horas en el archivo time.json. Hay que mantener el formato que usa la UPV para cada sesión como está en el archivo de ejemplo
 4. asegurarse que las actions están habilitadas
