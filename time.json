@@ -1,4 +1,3 @@
 {
-  "registros": ["MUS040","MUS055"],
-  "noRegistros": ["MUS006","MUS037"] 
+  "registros": ["MUS006","MUS037", "MUS040","MUS055"]
 }
